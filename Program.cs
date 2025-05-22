@@ -1,14 +1,26 @@
+using Microsoft.EntityFrameworkCore;
+using API_Pedidos.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<FundingRequestContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("XAMMP"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XAMMP"))
+    ));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    FundingRequestContext context = scope.ServiceProvider.GetRequiredService<FundingRequestContext>();
+    context.Database.EnsureCreated();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

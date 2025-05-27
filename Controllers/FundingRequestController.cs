@@ -13,7 +13,6 @@ namespace API_Pedidos.Controllers
     public class FundingRequestController : ControllerBase
     {
         private readonly FundingRequestContext _context;
-
         public FundingRequestController(FundingRequestContext context)
         {
             _context = context;
@@ -28,6 +27,8 @@ namespace API_Pedidos.Controllers
             }
             else
             {
+                _context.Add(newFundingRequest);
+                await _context.SaveChangesAsync();
                 return Ok(newFundingRequest);
             }
         }

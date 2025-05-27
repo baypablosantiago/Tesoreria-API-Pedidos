@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API_Pedidos.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_Pedidos.Controllers
@@ -11,9 +12,15 @@ namespace API_Pedidos.Controllers
     [Route("api/[controller]")]
     public class FundingRequestController : ControllerBase
     {
+        private readonly FundingRequestContext _context;
+
+        public FundingRequestController(FundingRequestContext context)
+        {
+            _context = context;
+        }
 
         [HttpPost]
-        public ActionResult<FundingRequest> AddFundingRequest(FundingRequest newFundingRequest)
+        public async Task<IActionResult> AddFundingRequest(FundingRequest newFundingRequest)
         {
             if (newFundingRequest is null)
             {
@@ -21,7 +28,7 @@ namespace API_Pedidos.Controllers
             }
             else
             {
-                return CreatedAtAction("Done",newFundingRequest);
+                return Ok(newFundingRequest);
             }
         }
 

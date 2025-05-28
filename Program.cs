@@ -13,7 +13,20 @@ builder.Services.AddDbContext<FundingRequestContext>(options =>
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XAMMP"))
     ));
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors();
 
 using (var scope = app.Services.CreateScope())
 {

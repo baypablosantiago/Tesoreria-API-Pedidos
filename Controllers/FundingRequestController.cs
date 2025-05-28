@@ -1,5 +1,6 @@
 using API_Pedidos.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_Pedidos.Controllers
 {
@@ -26,6 +27,13 @@ namespace API_Pedidos.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(newFundingRequest);
             }
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllFundingRequest()
+        {
+            return Ok(await _context.Requests.ToListAsync());
         }
 
     }   

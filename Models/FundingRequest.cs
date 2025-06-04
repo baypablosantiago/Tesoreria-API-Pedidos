@@ -6,8 +6,8 @@ namespace API_Pedidos.Models;
 public class FundingRequest
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-    public long Id { get; set; } 
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id { get; set; }
 
 
     [Required]
@@ -15,7 +15,7 @@ public class FundingRequest
 
 
     [Required]
-    public int RequestNumber { get; set; } 
+    public int RequestNumber { get; set; }
 
 
     [Required]
@@ -23,7 +23,7 @@ public class FundingRequest
 
 
     [Required]
-    public int PaymentOrderNumber { get; set; } 
+    public int PaymentOrderNumber { get; set; }
 
 
     [Required]
@@ -53,4 +53,7 @@ public class FundingRequest
 
     [MaxLength(500)]
     public string? Comments { get; set; }
+    
+
+    public bool IsActive { get; set; } = true;
 }

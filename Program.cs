@@ -4,21 +4,17 @@ using API_Pedidos.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<FundingRequestContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("XAMMP"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("XAMMP"))
-    ));
+    options.UseMySQL(builder.Configuration.GetConnectionString("XAMMP")));
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         policy
-            .WithOrigins("http://localhost:4200", "http://localhost:4300")
+            .WithOrigins("*")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

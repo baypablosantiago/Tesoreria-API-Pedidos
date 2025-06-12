@@ -55,7 +55,7 @@ var app = builder.Build();
 // Middleware
 // ------------------------------------------------------
 
-// Swagger solo en desarrollo
+// Swagger para el en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseOpenApi();
@@ -66,7 +66,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors();
 
-// Autorización (auth ya incluida en MapIdentityApi)
+// Autorización (la authentication ya esta incluida en MapIdentityApi)
 app.UseAuthorization();
 
 // Mapas de rutas
@@ -74,12 +74,12 @@ app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 
 // ------------------------------------------------------
-// Inicialización de la base de datos (temporal)
+// Inicialización de la base de datos (TEMPORAL)
 // ------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FundingRequestContext>();
-    context.Database.EnsureCreated(); // ⚠️ Migrar esto luego a Migrations
+    context.Database.EnsureCreated(); 
 }
 
 app.Run();

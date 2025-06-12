@@ -1,4 +1,5 @@
 using API_Pedidos.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +31,7 @@ namespace API_Pedidos.Controllers
         }
 
 
-        [HttpGet]
+        [HttpGet,Authorize]
         public async Task<IActionResult> GetAllFundingRequest()
         {
             return Ok(await _context.Requests.ToListAsync());

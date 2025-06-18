@@ -53,7 +53,10 @@ public class FundingRequest
 
     [MaxLength(500)]
     public string? Comments { get; set; }
-    
+
 
     public bool IsActive { get; set; } = true;
+
+
+    public string UserId { get; set; } = string.Empty;
 }

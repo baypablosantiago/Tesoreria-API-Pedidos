@@ -15,7 +15,7 @@ namespace API_Pedidos.Controllers
             _context = context;
         }
 
-        [HttpPost]
+        [HttpPost,Authorize]
         public async Task<IActionResult> AddFundingRequest(FundingRequest newFundingRequest)
         {
             if (newFundingRequest is null)

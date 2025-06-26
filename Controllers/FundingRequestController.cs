@@ -16,7 +16,7 @@ namespace API_Pedidos.Controllers
             _context = context;
         }
 
-        [HttpPost, Authorize]
+        [HttpPost, Authorize(Roles = "user")]
         public async Task<IActionResult> AddFundingRequest(FundingRequest newFundingRequest)
         {
             if (newFundingRequest is null)
@@ -38,14 +38,14 @@ namespace API_Pedidos.Controllers
         }
 
 
-        [HttpGet, Authorize]
+        [HttpGet, Authorize(Roles = "employee")]
         public async Task<IActionResult> GetAllFundingRequest()
         {
             return Ok(await _context.Requests.ToListAsync());
         }
 
 
-        [HttpGet("user"), Authorize]
+        [HttpGet("user"), Authorize(Roles = "user")]
         public async Task<IActionResult> GetMyFundingRequests()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

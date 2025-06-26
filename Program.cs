@@ -39,6 +39,7 @@ builder.Services.AddDbContext<FundingRequestContext>(options =>
 // Identity
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FundingRequestContext>();
 
 // CORS
@@ -75,12 +76,73 @@ app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 
 // ------------------------------------------------------
-// Inicialización de la base de datos (TEMPORAL)
+// Inicialización de la base de datos, roles y usuarios (TEMPORAL)
 // ------------------------------------------------------
+
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<FundingRequestContext>();
-    context.Database.EnsureCreated(); 
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<FundingRequestContext>();
+    context.Database.EnsureCreated();
+
+    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = services.GetService<RoleManager<IdentityRole>>();
+    if (roleManager == null)
+        throw new Exception("No se pudo resolver RoleManager<IdentityRole>");
+
+    string[] roles = new[] { "user", "employee" };
+
+    foreach (var role in roles)
+    {
+        if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+        {
+            var identityRole = new IdentityRole
+            {
+                Name = role,
+                NormalizedName = role.ToUpper(),
+                ConcurrencyStamp = Guid.NewGuid().ToString()
+            };
+
+            var result = roleManager.CreateAsync(identityRole).GetAwaiter().GetResult();
+            if (!result.Succeeded)
+            {
+                throw new Exception($"No se pudo crear el rol '{role}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
+
+    var users = new[]
+    {
+        new { Email = "usuario@test.com", Password = "!Usuario123", Role = "user" },
+        new { Email = "empleado@test.com", Password = "!Empleado123", Role = "employee" }
+    };
+
+    foreach (var u in users)
+    {
+        var existingUser = userManager.FindByEmailAsync(u.Email).GetAwaiter().GetResult();
+
+        if (existingUser == null)
+        {
+            var newUser = new IdentityUser
+            {
+                UserName = u.Email,
+                Email = u.Email
+            };
+
+            var createResult = userManager.CreateAsync(newUser, u.Password).GetAwaiter().GetResult();
+            if (!createResult.Succeeded)
+            {
+                throw new Exception($"Error al crear usuario '{u.Email}': {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            }
+
+            var addToRoleResult = userManager.AddToRoleAsync(newUser, u.Role).GetAwaiter().GetResult();
+            if (!addToRoleResult.Succeeded)
+            {
+                throw new Exception($"Error al asignar rol '{u.Role}' a usuario '{u.Email}': {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
 }
 
 app.Run();

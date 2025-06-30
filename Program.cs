@@ -91,7 +91,7 @@ using (var scope = app.Services.CreateScope())
     if (roleManager == null)
         throw new Exception("No se pudo resolver RoleManager<IdentityRole>");
 
-    string[] roles = new[] { "user", "employee" };
+    string[] roles = new[] { "user", "admin" };
 
     foreach (var role in roles)
     {
@@ -114,8 +114,8 @@ using (var scope = app.Services.CreateScope())
 
     var users = new[]
     {
-        new { Email = "usuario@test.com", Password = "!Usuario123", Role = "user" },
-        new { Email = "empleado@test.com", Password = "!Empleado123", Role = "employee" }
+        new { Email = "user@test.com", Password = "!User123", Role = "user" },
+        new { Email = "admin@test.com", Password = "!Admin123", Role = "admin" }
     };
 
     foreach (var u in users)

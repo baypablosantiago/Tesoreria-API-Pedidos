@@ -38,7 +38,7 @@ namespace API_Pedidos.Controllers
         }
 
 
-        [HttpGet, Authorize(Roles = "employee")]
+        [HttpGet("all"), Authorize(Roles = "admin")]
         public async Task<IActionResult> GetAllFundingRequest()
         {
             return Ok(await _context.Requests.ToListAsync());

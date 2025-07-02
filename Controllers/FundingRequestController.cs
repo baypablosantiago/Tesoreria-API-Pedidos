@@ -37,14 +37,6 @@ namespace API_Pedidos.Controllers
             }
         }
 
-
-        [HttpGet("all"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> GetAllFundingRequest()
-        {
-            return Ok(await _context.Requests.ToListAsync());
-        }
-
-
         [HttpGet("user"), Authorize(Roles = "user")]
         public async Task<IActionResult> GetMyFundingRequests()
         {
@@ -57,6 +49,29 @@ namespace API_Pedidos.Controllers
                 .ToListAsync();
 
             return Ok(myRequests);
+        }
+
+        [HttpGet("all"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAllFundingRequest()
+        {
+            return Ok(await _context.Requests.ToListAsync());
+        }
+
+        [HttpPatch("partial-payment/{id}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> PartialPayment(int id, [FromBody] double newPartialPayment)
+        {
+            var fundingRequest = await _context.Requests.FindAsync(id);
+            if (fundingRequest == null)
+            {
+                return NotFound();
+            }
+
+            fundingRequest.PartialPayment = newPartialPayment;
+
+            _context.Requests.Update(fundingRequest);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // Ok(fundingRequest); //probar cual es mas util
         }
 
 

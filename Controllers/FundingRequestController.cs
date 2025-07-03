@@ -58,7 +58,7 @@ namespace API_Pedidos.Controllers
         }
 
         [HttpPatch("partial-payment/{id}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> PartialPayment(int id, [FromBody] double newPartialPayment)
+        public async Task<IActionResult> PartialPayment(long id, [FromBody] double newPartialPayment)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);
             if (fundingRequest == null)
@@ -71,8 +71,27 @@ namespace API_Pedidos.Controllers
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Ok(fundingRequest); //probar cual es mas util
+            return Ok(fundingRequest);
         }
+
+        [HttpPatch("is-active/{id}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> ChangeIsActive(long id)
+        {
+            var fundingRequest = await _context.Requests.FindAsync(id);
+            if (fundingRequest == null)
+            {
+                return NotFound();
+            }
+
+            var state = fundingRequest.IsActive;
+            fundingRequest.IsActive = !state;
+
+            _context.Requests.Update(fundingRequest);
+            await _context.SaveChangesAsync();
+
+            return Ok(fundingRequest);
+        }
+
 
 
     }

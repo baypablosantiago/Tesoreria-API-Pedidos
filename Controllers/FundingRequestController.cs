@@ -57,6 +57,17 @@ namespace API_Pedidos.Controllers
             return Ok(await _context.Requests.ToListAsync());
         }
 
+        [HttpGet("inactive-requests"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAllInactiveRequest()
+        {
+            var requests = await _context.Requests
+            .Where(fr => !fr.IsActive)
+            .OrderByDescending(fr => fr.ReceivedAt)
+            .ToListAsync();
+
+            return Ok(requests);
+        }
+
         [HttpPatch("partial-payment/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> PartialPayment(long id, [FromBody] double newPartialPayment)
         {
@@ -91,6 +102,69 @@ namespace API_Pedidos.Controllers
 
             return Ok(fundingRequest);
         }
+
+
+        //ELIMINAR O COMENTAR
+        [HttpPost("test-insert-many-requests")]
+        public async Task<IActionResult> InsertManyTestFundingRequests()
+        {
+            var random = new Random();
+            var requests = new List<FundingRequest>();
+
+            var start = new DateTime(2024, 5, 1);
+            var end = new DateTime(2025, 7, 1);
+
+            int requestNumber = 1000;
+            int paymentOrderNumber = 500;
+
+            while (start <= end)
+            {
+                int requestsThisMonth = random.Next(5, 11); // entre 5 y 10 solicitudes
+
+                for (int i = 0; i < requestsThisMonth; i++)
+                {
+                    var da = random.Next(1, 4); // DA entre 1 y 3
+                    var amount = random.Next(1000, 8001); // Monto entre 1000 y 8000
+
+                    var receivedDay = random.Next(1, 28); // Día entre 1 y 27
+                    var receivedAt = new DateTime(start.Year, start.Month, receivedDay);
+                    var dueDate = receivedAt.AddDays(random.Next(10, 30)).ToString("yyyy-MM-dd");
+
+                    // Variar conceptos y fuentes de financiamiento
+                    var concepts = new[] { "Compra de insumos", "Servicios", "Reparaciones", "Equipamiento", "Mantenimiento" };
+                    var sources = new[] { "Nación", "Provincia", "Tesorería", "Fondo especial" };
+
+                    var concept = concepts[random.Next(concepts.Length)];
+                    var fundingSource = sources[random.Next(sources.Length)];
+
+                    requests.Add(new FundingRequest
+                    {
+                        ReceivedAt = receivedAt,
+                        DA = da,
+                        RequestNumber = requestNumber++,
+                        FiscalYear = receivedAt.Year,
+                        PaymentOrderNumber = paymentOrderNumber++,
+                        Concept = $"{concept} #{requestNumber}",
+                        DueDate = dueDate,
+                        Amount = amount,
+                        FundingSource = fundingSource,
+                        CheckingAccount = $"CUENTA-{da}-{i + 1}",
+                        Comments = "Carga automática de prueba",
+                        PartialPayment = (i % 3 == 0) ? 0.5 : 0,
+                        IsActive = false,
+                        UserId = "admin"
+                    });
+                }
+
+                start = start.AddMonths(1);
+            }
+
+            _context.Requests.AddRange(requests);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { inserted = requests.Count });
+        }
+
 
 
 

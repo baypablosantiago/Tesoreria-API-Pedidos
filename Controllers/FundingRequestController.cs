@@ -51,10 +51,15 @@ namespace API_Pedidos.Controllers
             return Ok(myRequests);
         }
 
-        [HttpGet("all"), Authorize(Roles = "admin")]
+        [HttpGet("active-requests"), Authorize(Roles = "admin")]
         public async Task<IActionResult> GetAllFundingRequest()
         {
-            return Ok(await _context.Requests.ToListAsync());
+           var requests = await _context.Requests
+            .Where(fr => fr.IsActive)
+            .OrderByDescending(fr => fr.ReceivedAt)
+            .ToListAsync();
+
+            return Ok(requests);
         }
 
         [HttpGet("inactive-requests"), Authorize(Roles = "admin")]

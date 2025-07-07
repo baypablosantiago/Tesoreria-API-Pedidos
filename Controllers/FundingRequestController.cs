@@ -54,10 +54,10 @@ namespace API_Pedidos.Controllers
         [HttpGet("active-requests"), Authorize(Roles = "admin")]
         public async Task<IActionResult> GetAllFundingRequest()
         {
-           var requests = await _context.Requests
-            .Where(fr => fr.IsActive)
-            .OrderByDescending(fr => fr.ReceivedAt)
-            .ToListAsync();
+            var requests = await _context.Requests
+             .Where(fr => fr.IsActive)
+             .OrderByDescending(fr => fr.ReceivedAt)
+             .ToListAsync();
 
             return Ok(requests);
         }
@@ -122,25 +122,51 @@ namespace API_Pedidos.Controllers
             int requestNumber = 1000;
             int paymentOrderNumber = 500;
 
+            var das = new[] { 959, 965, 953 };
+
+            var conceptTemplates = new[]
+            {
+        "Adquisición de insumos médicos para hospitales provinciales",
+        "Servicio de mantenimiento integral de equipos informáticos",
+        "Reparación de infraestructura edilicia en escuelas rurales",
+        "Compra de mobiliario para oficinas administrativas",
+        "Servicio de limpieza y mantenimiento en dependencias públicas",
+        "Contratación de transporte para programas sociales",
+        "Actualización de software y licencias gubernamentales",
+        "Adquisición de materiales didácticos para instituciones educativas",
+        "Mantenimiento preventivo de flota vehicular oficial",
+        "Servicios de consultoría para planificación presupuestaria"
+            };
+
+            var sources = new[] { "Nación", "Provincia", "Tesorería", "Fondo especial" };
+
             while (start <= end)
             {
-                int requestsThisMonth = random.Next(5, 11); // entre 5 y 10 solicitudes
+                int requestsThisMonth = random.Next(2, 5); // entre 2 y 5 solicitudes
 
                 for (int i = 0; i < requestsThisMonth; i++)
                 {
-                    var da = random.Next(1, 4); // DA entre 1 y 3
-                    var amount = random.Next(1000, 8001); // Monto entre 1000 y 8000
+                    var da = das[random.Next(das.Length)];
+                    var amount = random.Next(800_000, 8_000_001); // entre 800.000 y 8.000.000
 
                     var receivedDay = random.Next(1, 28); // Día entre 1 y 27
                     var receivedAt = new DateTime(start.Year, start.Month, receivedDay);
                     var dueDate = receivedAt.AddDays(random.Next(10, 30)).ToString("yyyy-MM-dd");
 
-                    // Variar conceptos y fuentes de financiamiento
-                    var concepts = new[] { "Compra de insumos", "Servicios", "Reparaciones", "Equipamiento", "Mantenimiento" };
-                    var sources = new[] { "Nación", "Provincia", "Tesorería", "Fondo especial" };
-
-                    var concept = concepts[random.Next(concepts.Length)];
+                    var concept = conceptTemplates[random.Next(conceptTemplates.Length)];
                     var fundingSource = sources[random.Next(sources.Length)];
+
+                    // 50% de probabilidad de tener comentarios
+                    var hasComments = random.NextDouble() < 0.5;
+                    var comments = hasComments ? "Carga automática de prueba" : null;
+
+                    bool hasPartialPayment = random.NextDouble() < 0.2; // 20% chance
+                    double partialPayment = 0;
+                    if (hasPartialPayment)
+                    {
+                        partialPayment = (double)random.Next(1, (int)(amount / 3) + 1);
+                    }
+
 
                     requests.Add(new FundingRequest
                     {
@@ -149,14 +175,14 @@ namespace API_Pedidos.Controllers
                         RequestNumber = requestNumber++,
                         FiscalYear = receivedAt.Year,
                         PaymentOrderNumber = paymentOrderNumber++,
-                        Concept = $"{concept} #{requestNumber}",
+                        Concept = $"{concept} (Ref. #{requestNumber})",
                         DueDate = dueDate,
                         Amount = amount,
                         FundingSource = fundingSource,
                         CheckingAccount = $"CUENTA-{da}-{i + 1}",
-                        Comments = "Carga automática de prueba",
-                        PartialPayment = (i % 3 == 0) ? 0.5 : 0,
-                        IsActive = false,
+                        Comments = comments,
+                        PartialPayment = partialPayment,
+                        IsActive = true,
                         UserId = "admin"
                     });
                 }
@@ -169,7 +195,6 @@ namespace API_Pedidos.Controllers
 
             return Ok(new { inserted = requests.Count });
         }
-
 
 
 

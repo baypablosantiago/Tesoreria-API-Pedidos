@@ -47,6 +47,9 @@ public class FundingRequest
     [MaxLength(500)]
     public string? Comments { get; set; }
 
+    [MaxLength(500)]
+    public string? CommentsFromTeso { get; set; }
+
     public double PartialPayment { get; set; } = 0;
 
     public bool IsActive { get; set; } = true;

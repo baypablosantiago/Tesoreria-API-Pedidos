@@ -16,7 +16,7 @@ namespace API_Pedidos.Controllers
             _context = context;
         }
 
-        [HttpPost, Authorize(Roles = "user")]
+        [HttpPost, Authorize(Roles = "user,admin")]
         public async Task<IActionResult> AddFundingRequest(FundingRequest newFundingRequest)
         {
             if (newFundingRequest is null)
@@ -107,6 +107,24 @@ namespace API_Pedidos.Controllers
 
             return Ok(fundingRequest);
         }
+
+        [HttpPatch("add-comment/{id}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> AddComment(long id, [FromBody] CommentsFromTesoDTO dto)
+        {
+            var fundingRequest = await _context.Requests.FindAsync(id);
+            if (fundingRequest == null)
+            {
+                return NotFound();
+            }
+
+            fundingRequest.CommentsFromTeso = dto.Comment;
+
+            _context.Requests.Update(fundingRequest);
+            await _context.SaveChangesAsync();
+
+            return Ok(fundingRequest);
+        }
+
 
 
         //ELIMINAR O COMENTAR

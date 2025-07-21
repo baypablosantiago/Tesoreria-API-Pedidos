@@ -114,8 +114,8 @@ using (var scope = app.Services.CreateScope())
 
     var users = new[]
     {
-        new { Email = "user@test.com", Password = "!User123", Role = "user" },
-        new { Email = "admin@test.com", Password = "!Admin123", Role = "admin" }
+        new { Email = "user@user.com", Password = "123", Role = "user" },
+        new { Email = "admin@admin.com", Password = "123", Role = "admin" }
     };
 
     foreach (var u in users)

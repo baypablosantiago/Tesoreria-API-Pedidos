@@ -22,7 +22,7 @@ public class FundingRequest
     public int FiscalYear { get; set; }
 
     [Required]
-    public int PaymentOrderNumber { get; set; }
+    public string PaymentOrderNumber { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(500)]

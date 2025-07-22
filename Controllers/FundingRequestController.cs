@@ -138,7 +138,7 @@ namespace API_Pedidos.Controllers
             var end = new DateTime(2025, 7, 1);
 
             int requestNumber = 1000;
-            int paymentOrderNumber = 500;
+            string paymentOrderNumber = "500";
 
             var das = new[] { 959, 965, 953 };
 
@@ -192,7 +192,7 @@ namespace API_Pedidos.Controllers
                         DA = da,
                         RequestNumber = requestNumber++,
                         FiscalYear = receivedAt.Year,
-                        PaymentOrderNumber = paymentOrderNumber++,
+                        PaymentOrderNumber = paymentOrderNumber,
                         Concept = $"{concept} (Ref. #{requestNumber})",
                         DueDate = dueDate,
                         Amount = amount,

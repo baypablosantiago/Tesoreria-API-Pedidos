@@ -54,5 +54,7 @@ public class FundingRequest
 
     public bool IsActive { get; set; } = true;
 
+    public bool OnWork { get; set; } = false;
+
     public string UserId { get; set; } = string.Empty;
 }

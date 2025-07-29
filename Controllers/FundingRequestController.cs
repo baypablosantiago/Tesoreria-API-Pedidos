@@ -104,7 +104,7 @@ namespace API_Pedidos.Controllers
             fundingRequest.IsActive = !state;
             if (fundingRequest.IsActive == false)
             {
-                fundingRequest.OnWork = true;
+                fundingRequest.OnWork = false;
             }
 
             _context.Requests.Update(fundingRequest);

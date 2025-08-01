@@ -31,7 +31,7 @@ builder.Services.AddOpenApiDocument(config =>
 });
 
 // Base de datos
-var connectionString = builder.Configuration.GetConnectionString("Postgres")
+var connectionString = builder.Configuration.GetConnectionString("RENDER")
     ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
 builder.Services.AddDbContext<FundingRequestContext>(options =>
     options.UseNpgsql(connectionString));

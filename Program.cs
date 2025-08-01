@@ -31,10 +31,10 @@ builder.Services.AddOpenApiDocument(config =>
 });
 
 // Base de datos
-var connectionString = builder.Configuration.GetConnectionString("XAMMP")
-    ?? throw new InvalidOperationException("Connection string 'XAMMP' not found.");
+var connectionString = builder.Configuration.GetConnectionString("Postgres")
+    ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
 builder.Services.AddDbContext<FundingRequestContext>(options =>
-    options.UseMySQL(connectionString));
+    options.UseNpgsql(connectionString));
 
 // Identity
 builder.Services.AddAuthorization();
@@ -65,7 +65,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // HTTPS y CORS
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseCors();
 
 // Autorización (la authentication ya esta incluida en MapIdentityApi)

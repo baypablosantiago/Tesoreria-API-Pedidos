@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using API_Pedidos.Models;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
-
+Env.Load();
 // ------------------------------------------------------
 // Servicios
 // ------------------------------------------------------
@@ -31,8 +32,13 @@ builder.Services.AddOpenApiDocument(config =>
 });
 
 // Base de datos
-var connectionString = builder.Configuration.GetConnectionString("RENDER")
-    ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
+var connectionString = builder.Environment.IsDevelopment()
+    ? Environment.GetEnvironmentVariable("ConnectionStrings__LOCALHOST")
+    : Environment.GetEnvironmentVariable("ConnectionStrings__RENDER");
+
+if (string.IsNullOrEmpty(connectionString))
+    throw new InvalidOperationException("Connection string not found.");
+
 builder.Services.AddDbContext<FundingRequestContext>(options =>
     options.UseNpgsql(connectionString));
 

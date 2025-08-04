@@ -10,7 +10,7 @@ public class FundingRequest
     public long Id { get; set; }
 
     [Required]
-    public DateTime ReceivedAt { get; set; } = DateTime.Now;
+    public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
 
     [Required]
     public int DA { get; set; }

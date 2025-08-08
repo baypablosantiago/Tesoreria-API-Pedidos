@@ -100,9 +100,13 @@ namespace API_Pedidos.Controllers
         [HttpPut("update-request"), Authorize(Roles = "user")]
         public async Task<IActionResult> UpdateFundingRequest([FromBody] FundingRequestUpdateDto dto)
         {
-            var success = await _fundingRequestService.UpdateFundingRequestAsync(dto);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            var success = await _fundingRequestService.UpdateFundingRequestAsync(dto, userId);
             if (!success)
-                return NotFound(new { message = "La solicitud no fue encontrada." });
+                return NotFound(new { message = "La solicitud no fue encontrada o no tienes permisos para modificarla." });
 
             return Ok(new { message = "Solicitud actualizada correctamente." });
         }

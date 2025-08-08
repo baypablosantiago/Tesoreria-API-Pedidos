@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using API_Pedidos.Models;
 using API_Pedidos.Services;
+using API_Pedidos.Data;
 using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,12 +34,10 @@ builder.Services.AddOpenApiDocument(config =>
 });
 
 // Base de datos
-var connectionString = builder.Environment.IsDevelopment()
-    ? Environment.GetEnvironmentVariable("ConnectionStrings__LOCALHOST")
-    : Environment.GetEnvironmentVariable("ConnectionStrings__RENDER");
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__LOCALHOST");
 
 if (string.IsNullOrEmpty(connectionString))
-    throw new InvalidOperationException("Connection string not found.");
+    throw new InvalidOperationException("Connection string not found. Make sure ConnectionStrings__LOCALHOST is set in your .env file.");
 
 builder.Services.AddDbContext<FundingRequestContext>(options =>
     options.UseNpgsql(connectionString));
@@ -58,7 +57,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -76,7 +78,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // HTTPS y CORS
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseCors();
 
 // Autorización (la authentication ya esta incluida en MapIdentityApi)
@@ -87,73 +89,19 @@ app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 
 // ------------------------------------------------------
-// Inicialización de la base de datos, roles y usuarios (TEMPORAL)
+// Inicialización de la base de datos y seeding
 // ------------------------------------------------------
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
     var context = services.GetRequiredService<FundingRequestContext>();
+    
+    // Asegurar que la base de datos existe
     context.Database.EnsureCreated();
-
-    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-    var roleManager = services.GetService<RoleManager<IdentityRole>>();
-    if (roleManager == null)
-        throw new Exception("No se pudo resolver RoleManager<IdentityRole>");
-
-    string[] roles = new[] { "user", "admin" };
-
-    foreach (var role in roles)
-    {
-        if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
-        {
-            var identityRole = new IdentityRole
-            {
-                Name = role,
-                NormalizedName = role.ToUpper(),
-                ConcurrencyStamp = Guid.NewGuid().ToString()
-            };
-
-            var result = roleManager.CreateAsync(identityRole).GetAwaiter().GetResult();
-            if (!result.Succeeded)
-            {
-                throw new Exception($"No se pudo crear el rol '{role}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
-        }
-    }
-
-    var users = new[]
-    {
-        new { Email = "user@user.com", Password = "_a123A", Role = "user" },
-        new { Email = "admin@admin.com", Password = "_a123A", Role = "admin" }
-    };
-
-    foreach (var u in users)
-    {
-        var existingUser = userManager.FindByEmailAsync(u.Email).GetAwaiter().GetResult();
-
-        if (existingUser == null)
-        {
-            var newUser = new IdentityUser
-            {
-                UserName = u.Email,
-                Email = u.Email
-            };
-
-            var createResult = userManager.CreateAsync(newUser, u.Password).GetAwaiter().GetResult();
-            if (!createResult.Succeeded)
-            {
-                throw new Exception($"Error al crear usuario '{u.Email}': {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-            }
-
-            var addToRoleResult = userManager.AddToRoleAsync(newUser, u.Role).GetAwaiter().GetResult();
-            if (!addToRoleResult.Succeeded)
-            {
-                throw new Exception($"Error al asignar rol '{u.Role}' a usuario '{u.Email}': {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
-            }
-        }
-    }
+    
+    // Ejecutar seeding de forma segura
+    await DatabaseSeeder.SeedAsync(services);
 }
 
 app.Run();

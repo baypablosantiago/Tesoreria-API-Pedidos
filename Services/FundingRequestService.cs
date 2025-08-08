@@ -111,10 +111,13 @@ namespace API_Pedidos.Services
             return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
-        public async Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto)
+        public async Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId)
         {
             var request = await _context.Requests.FindAsync(dto.Id);
             if (request == null)
+                return false;
+
+            if (request.UserId != userId)
                 return false;
 
             request.RequestNumber = dto.RequestNumber;

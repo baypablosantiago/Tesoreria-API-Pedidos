@@ -13,38 +13,47 @@ namespace API_Pedidos.Services
             _context = context;
         }
 
-        public async Task<FundingRequest> AddFundingRequestAsync(FundingRequest newFundingRequest, string userId)
+        public async Task<FundingRequestResponseDto> AddFundingRequestAsync(FundingRequestCreateDto newFundingRequest, string userId)
         {
-            newFundingRequest.UserId = userId;
-            _context.Add(newFundingRequest);
+            var entity = FundingRequestMapper.ToEntity(newFundingRequest);
+            entity.UserId = userId;
+            
+            _context.Add(entity);
             await _context.SaveChangesAsync();
-            return newFundingRequest;
+            
+            return FundingRequestMapper.ToResponseDto(entity);
         }
 
-        public async Task<IEnumerable<FundingRequest>> GetUserFundingRequestsAsync(string userId)
+        public async Task<IEnumerable<FundingRequestResponseDto>> GetUserFundingRequestsAsync(string userId)
         {
-            return await _context.Requests
+            var entities = await _context.Requests
                 .Where(r => r.UserId == userId)
                 .ToListAsync();
+                
+            return FundingRequestMapper.ToResponseDtoList(entities);
         }
 
-        public async Task<IEnumerable<FundingRequest>> GetAllActiveFundingRequestsAsync()
+        public async Task<IEnumerable<FundingRequestAdminResponseDto>> GetAllActiveFundingRequestsAsync()
         {
-            return await _context.Requests
+            var entities = await _context.Requests
                 .Where(fr => fr.IsActive)
                 .OrderByDescending(fr => fr.ReceivedAt)
                 .ToListAsync();
+                
+            return FundingRequestMapper.ToAdminResponseDtoList(entities);
         }
 
-        public async Task<IEnumerable<FundingRequest>> GetAllInactiveFundingRequestsAsync()
+        public async Task<IEnumerable<FundingRequestAdminResponseDto>> GetAllInactiveFundingRequestsAsync()
         {
-            return await _context.Requests
+            var entities = await _context.Requests
                 .Where(fr => !fr.IsActive)
                 .OrderByDescending(fr => fr.ReceivedAt)
                 .ToListAsync();
+                
+            return FundingRequestMapper.ToAdminResponseDtoList(entities);
         }
 
-        public async Task<FundingRequest?> UpdatePartialPaymentAsync(long id, double newPartialPayment)
+        public async Task<FundingRequestAdminResponseDto?> UpdatePartialPaymentAsync(long id, double newPartialPayment)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);
             if (fundingRequest == null)
@@ -54,10 +63,10 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            return fundingRequest;
+            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
-        public async Task<FundingRequest?> ChangeIsActiveAsync(long id)
+        public async Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);
             if (fundingRequest == null)
@@ -73,10 +82,10 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            return fundingRequest;
+            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
-        public async Task<FundingRequest?> ChangeOnWorkAsync(long id)
+        public async Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);
             if (fundingRequest == null)
@@ -86,10 +95,10 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            return fundingRequest;
+            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
-        public async Task<FundingRequest?> AddCommentAsync(long id, string comment)
+        public async Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);
             if (fundingRequest == null)
@@ -99,7 +108,7 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            return fundingRequest;
+            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
         public async Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto)

@@ -19,7 +19,7 @@ namespace API_Pedidos.Controllers
         }
 
         [HttpPost, Authorize(Roles = "user,admin")]
-        public async Task<IActionResult> AddFundingRequest(FundingRequest newFundingRequest)
+        public async Task<IActionResult> AddFundingRequest(FundingRequestCreateDto newFundingRequest)
         {
             if (newFundingRequest is null)
                 return BadRequest();
@@ -58,9 +58,9 @@ namespace API_Pedidos.Controllers
         }
 
         [HttpPatch("partial-payment/{id}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> PartialPayment(long id, [FromBody] double newPartialPayment)
+        public async Task<IActionResult> PartialPayment(long id, [FromBody] PartialPaymentUpdateDto dto)
         {
-            var result = await _fundingRequestService.UpdatePartialPaymentAsync(id, newPartialPayment);
+            var result = await _fundingRequestService.UpdatePartialPaymentAsync(id, dto.PartialPayment);
             if (result == null)
                 return NotFound();
 

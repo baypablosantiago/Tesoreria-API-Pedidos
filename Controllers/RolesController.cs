@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using API_Pedidos.Services;
 
 namespace API_Pedidos.Controllers
 {
@@ -8,12 +8,12 @@ namespace API_Pedidos.Controllers
     [Route("[controller]")]
     public class RolesController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        public RolesController(UserManager<IdentityUser> userManager)
-        {
-            _userManager = userManager;
-        }
+        private readonly IRolesService _rolesService;
 
+        public RolesController(IRolesService rolesService)
+        {
+            _rolesService = rolesService;
+        }
 
         [HttpGet, Authorize]
         public async Task<IActionResult> GetRole()
@@ -23,17 +23,12 @@ namespace API_Pedidos.Controllers
             if (string.IsNullOrEmpty(userName))
                 return Unauthorized("Usuario no autenticado");
 
-            var user = await _userManager.FindByNameAsync(userName);
+            var role = await _rolesService.GetUserRoleAsync(userName);
 
-            if (user == null)
+            if (role == null)
                 return NotFound("Usuario no encontrado");
-
-            var roles = await _userManager.GetRolesAsync(user);
-
-            var role = roles.FirstOrDefault();
 
             return Ok(new { role });
         }
-
     }
 }

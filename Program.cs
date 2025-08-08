@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using API_Pedidos.Models;
+using API_Pedidos.Services;
 using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +42,10 @@ if (string.IsNullOrEmpty(connectionString))
 
 builder.Services.AddDbContext<FundingRequestContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Services
+builder.Services.AddScoped<IFundingRequestService, FundingRequestService>();
+builder.Services.AddScoped<IRolesService, RolesService>();
 
 // Identity
 builder.Services.AddAuthorization();

@@ -7,14 +7,9 @@ using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
-// ------------------------------------------------------
-// Servicios
-// ------------------------------------------------------
 
-// Controllers
 builder.Services.AddControllers();
 
-// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApiDocument(config =>
 {
@@ -33,7 +28,6 @@ builder.Services.AddOpenApiDocument(config =>
         new NSwag.Generation.Processors.Security.AspNetCoreOperationSecurityScopeProcessor("Bearer"));
 });
 
-// Base de datos
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__LOCALHOST");
 
 if (string.IsNullOrEmpty(connectionString))
@@ -42,17 +36,14 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<FundingRequestContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Services
 builder.Services.AddScoped<IFundingRequestService, FundingRequestService>();
 builder.Services.AddScoped<IRolesService, RolesService>();
 
-// Identity
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FundingRequestContext>();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -66,41 +57,29 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ------------------------------------------------------
-// Middleware
-// ------------------------------------------------------
 
-// Swagger para el en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseOpenApi();
     app.UseSwaggerUi();
 }
 
-// HTTPS y CORS
 app.UseHttpsRedirection();
 app.UseCors();
 
-// Autorización (la authentication ya esta incluida en MapIdentityApi)
 app.UseAuthorization();
 
-// Mapas de rutas
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 
-// ------------------------------------------------------
-// Inicialización de la base de datos y seeding
-// ------------------------------------------------------
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<FundingRequestContext>();
     
-    // Asegurar que la base de datos existe
     context.Database.EnsureCreated();
     
-    // Ejecutar seeding de forma segura
     await DatabaseSeeder.SeedAsync(services);
 }
 

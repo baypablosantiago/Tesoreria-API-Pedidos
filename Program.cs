@@ -58,13 +58,12 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseOpenApi();
-    app.UseSwaggerUi();
-}
+// Habilitar Swagger en producción también para containers
+app.UseOpenApi();
+app.UseSwaggerUi();
 
-app.UseHttpsRedirection();
+// Remover redirección HTTPS para desarrollo local
+// app.UseHttpsRedirection();
 app.UseCors();
 
 app.UseAuthorization();

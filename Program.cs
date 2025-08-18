@@ -4,6 +4,7 @@ using API_Pedidos.Models;
 using API_Pedidos.Services;
 using API_Pedidos.Data;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
@@ -43,6 +44,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FundingRequestContext>();
+
+builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
+{
+    options.BearerTokenExpiration = TimeSpan.FromMinutes(1);
+    options.RefreshTokenExpiration = TimeSpan.FromMinutes(1); 
+});
 
 builder.Services.AddCors(options =>
 {

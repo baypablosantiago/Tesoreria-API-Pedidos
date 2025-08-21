@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using API_Pedidos.Models;
 using API_Pedidos.Services;
 using API_Pedidos.Data;
+using API_Pedidos.Middleware;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 
@@ -39,6 +40,7 @@ builder.Services.AddDbContext<FundingRequestContext>(options =>
 
 builder.Services.AddScoped<IFundingRequestService, FundingRequestService>();
 builder.Services.AddScoped<IRolesService, RolesService>();
+builder.Services.AddScoped<ILoginAuditService, LoginAuditService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
@@ -73,6 +75,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseMiddleware<LoginAuditMiddleware>();
 
 app.UseAuthorization();
 

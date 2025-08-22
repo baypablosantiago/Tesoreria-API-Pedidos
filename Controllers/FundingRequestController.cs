@@ -60,7 +60,11 @@ namespace API_Pedidos.Controllers
         [HttpPatch("partial-payment/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> PartialPayment(long id, [FromBody] PartialPaymentUpdateDto dto)
         {
-            var result = await _fundingRequestService.UpdatePartialPaymentAsync(id, dto.PartialPayment);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var result = await _fundingRequestService.UpdatePartialPaymentAsync(id, dto.PartialPayment, currentUserId);
             if (result == null)
                 return NotFound();
 
@@ -70,7 +74,11 @@ namespace API_Pedidos.Controllers
         [HttpPatch("is-active/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> ChangeIsActive(long id)
         {
-            var result = await _fundingRequestService.ChangeIsActiveAsync(id);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var result = await _fundingRequestService.ChangeIsActiveAsync(id, currentUserId);
             if (result == null)
                 return NotFound();
 
@@ -80,7 +88,11 @@ namespace API_Pedidos.Controllers
         [HttpPatch("on-work/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> ChangeInWork(long id)
         {
-            var result = await _fundingRequestService.ChangeOnWorkAsync(id);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var result = await _fundingRequestService.ChangeOnWorkAsync(id, currentUserId);
             if (result == null)
                 return NotFound();
 
@@ -90,7 +102,11 @@ namespace API_Pedidos.Controllers
         [HttpPatch("add-comment/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> AddComment(long id, [FromBody] CommentsFromTesoDto dto)
         {
-            var result = await _fundingRequestService.AddCommentAsync(id, dto.Comment);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var result = await _fundingRequestService.AddCommentAsync(id, dto.Comment, currentUserId);
             if (result == null)
                 return NotFound();
 

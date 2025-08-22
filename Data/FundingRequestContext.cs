@@ -13,4 +13,5 @@ public class FundingRequestContext : IdentityDbContext<IdentityUser, IdentityRol
 
     public DbSet<FundingRequest> Requests { get; set; } = null!;
     public DbSet<LoginAudit> LoginAudits { get; set; } = null!;
+    public DbSet<FundingRequestAudit> FundingRequestAudits { get; set; } = null!;
 }

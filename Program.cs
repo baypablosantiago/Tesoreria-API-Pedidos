@@ -41,6 +41,7 @@ builder.Services.AddDbContext<FundingRequestContext>(options =>
 builder.Services.AddScoped<IFundingRequestService, FundingRequestService>();
 builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<ILoginAuditService, LoginAuditService>();
+builder.Services.AddScoped<IFundingRequestAuditService, FundingRequestAuditService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()

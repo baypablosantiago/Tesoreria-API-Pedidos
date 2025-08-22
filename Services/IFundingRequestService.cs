@@ -8,10 +8,10 @@ namespace API_Pedidos.Services
         Task<IEnumerable<FundingRequestResponseDto>> GetUserFundingRequestsAsync(string userId);
         Task<IEnumerable<FundingRequestAdminResponseDto>> GetAllActiveFundingRequestsAsync();
         Task<IEnumerable<FundingRequestAdminResponseDto>> GetAllInactiveFundingRequestsAsync();
-        Task<FundingRequestAdminResponseDto?> UpdatePartialPaymentAsync(long id, double newPartialPayment);
-        Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id);
-        Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id);
-        Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment);
+        Task<FundingRequestAdminResponseDto?> UpdatePartialPaymentAsync(long id, double newPartialPayment, string currentUserId);
+        Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id, string currentUserId);
+        Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id, string currentUserId);
+        Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment, string currentUserId);
         Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId);
     }
 }

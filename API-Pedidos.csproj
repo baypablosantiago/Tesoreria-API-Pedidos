@@ -21,4 +21,11 @@
     <PackageReference Include="NSwag.AspNetCore" Version="14.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include=".env">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

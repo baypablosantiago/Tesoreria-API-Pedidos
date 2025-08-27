@@ -6,9 +6,13 @@ using API_Pedidos.Data;
 using API_Pedidos.Middleware;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
+
+// Configuración para reverse proxy
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 builder.Services.AddControllers();
 
@@ -43,6 +47,14 @@ builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<ILoginAuditService, LoginAuditService>();
 builder.Services.AddScoped<IFundingRequestAuditService, FundingRequestAuditService>();
 
+// Headers para reverse proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddRoles<IdentityRole>()
@@ -54,12 +66,21 @@ builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, o
     options.RefreshTokenExpiration = TimeSpan.FromMinutes(6); 
 });
 
+// 🔹 Configuración de CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
-              .AllowAnyHeader()
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:4200", "https://localhost:4200");
+        }
+        else
+        {
+            // El proxy presenta el dominio como HTTPS
+            policy.WithOrigins("https://solicitudesdefondos.entrerios.gov.ar", "http://localhost", "http://127.0.0.1");
+        }
+        policy.AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
@@ -67,22 +88,28 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseOpenApi();
     app.UseSwaggerUi();
 }
 
-app.UseHttpsRedirection();
-app.UseCors();
-app.UseMiddleware<LoginAuditMiddleware>();
+// NO UseHttpsRedirection - el proxy maneja HTTPS
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+// 🔹 Orden correcto de middlewares
+app.UseForwardedHeaders(); // ANTES de CORS
+app.UseCors();
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<LoginAuditMiddleware>();
 
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
-
 
 using (var scope = app.Services.CreateScope())
 {

@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
-// Configuración para reverse proxy
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 builder.Services.AddControllers();
@@ -66,7 +65,7 @@ builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, o
     options.RefreshTokenExpiration = TimeSpan.FromMinutes(6); 
 });
 
-// 🔹 Configuración de CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -77,8 +76,7 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            // El proxy presenta el dominio como HTTPS
-            policy.WithOrigins("https://solicitudesdefondos.entrerios.gov.ar", "http://localhost", "http://127.0.0.1");
+            policy.WithOrigins("https://solicitudesdefondos.entrerios.gov.ar");
         }
         policy.AllowAnyHeader()
               .AllowAnyMethod()
@@ -94,14 +92,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUi();
 }
 
-// NO UseHttpsRedirection - el proxy maneja HTTPS
+// NO UseHttpsRedirection porque lo maneja el proxy
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
-// 🔹 Orden correcto de middlewares
-app.UseForwardedHeaders(); // ANTES de CORS
+app.UseForwardedHeaders(); 
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

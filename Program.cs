@@ -45,6 +45,7 @@ builder.Services.AddScoped<IFundingRequestService, FundingRequestService>();
 builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<ILoginAuditService, LoginAuditService>();
 builder.Services.AddScoped<IFundingRequestAuditService, FundingRequestAuditService>();
+builder.Services.AddScoped<IUserDAService, UserDAService>();
 
 // Headers para reverse proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

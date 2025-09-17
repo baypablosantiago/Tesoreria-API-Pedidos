@@ -54,6 +54,7 @@ namespace API_Pedidos.Data
             {
                 await CreateUserIfNotExistsAsync(userManager, userEmail, userPassword, "user");
             }
+            //aca hardcodeo la creacion de usuarios
         }
 
         private static async Task CreateUserIfNotExistsAsync(UserManager<IdentityUser> userManager, string email, string password, string role)

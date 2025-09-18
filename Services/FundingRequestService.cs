@@ -10,12 +10,14 @@ namespace API_Pedidos.Services
         private readonly FundingRequestContext _context;
         private readonly IFundingRequestAuditService _auditService;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IPartialPaymentService _partialPaymentService;
 
-        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager)
+        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager, IPartialPaymentService partialPaymentService)
         {
             _context = context;
             _auditService = auditService;
             _userManager = userManager;
+            _partialPaymentService = partialPaymentService;
         }
 
         public async Task<FundingRequestResponseDto> AddFundingRequestAsync(FundingRequestCreateDto newFundingRequest, string userId)
@@ -37,8 +39,9 @@ namespace API_Pedidos.Services
         {
             var entities = await _context.Requests
                 .Where(r => r.UserId == userId)
+                .OrderByDescending(r => r.ReceivedAt)
                 .ToListAsync();
-                
+
             return FundingRequestMapper.ToResponseDtoList(entities);
         }
 
@@ -68,14 +71,23 @@ namespace API_Pedidos.Services
             if (fundingRequest == null)
                 return null;
 
+            var currentUser = await _userManager.FindByIdAsync(currentUserId);
+            var userEmail = currentUser?.Email ?? "Unknown";
+
+            // Crear nuevo registro en PartialPayments
+            await _partialPaymentService.CreatePartialPaymentAsync(id, (decimal)newPartialPayment, currentUserId, userEmail);
+
             var oldPayment = fundingRequest.PartialPayment;
-            fundingRequest.PartialPayment = newPartialPayment;
+
+            // Recalcular el total de pagos parciales
+            var totalPartialPayment = await _partialPaymentService.GetTotalPartialPaymentAsync(id);
+            fundingRequest.PartialPayment = (double)totalPartialPayment;
+
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            // Auditar cambio de pago
-            var currentUser = await _userManager.FindByIdAsync(currentUserId);
-            await _auditService.LogPaymentUpdateAsync(id, currentUserId, currentUser?.Email ?? "Unknown", oldPayment, newPartialPayment);
+            // Auditar cambio de pago (mantener compatibilidad con sistema de auditoría)
+            await _auditService.LogPaymentUpdateAsync(id, currentUserId, userEmail, oldPayment, (double)totalPartialPayment);
 
             return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }

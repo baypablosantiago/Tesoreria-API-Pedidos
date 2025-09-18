@@ -29,5 +29,16 @@ namespace API_Pedidos.Controllers
             var total = await _partialPaymentService.GetTotalPartialPaymentAsync(fundingRequestId);
             return Ok(new { total });
         }
+
+        [HttpDelete("{paymentId}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> DeletePartialPayment(int paymentId)
+        {
+            var result = await _partialPaymentService.DeletePartialPaymentAsync(paymentId);
+            if (!result)
+                return NotFound();
+
+            return Ok();
+        }
     }
 }

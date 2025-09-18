@@ -60,5 +60,30 @@ namespace API_Pedidos.Services
                 // CreatedByUserId y CreatedByUserEmail NO se exponen por seguridad
             };
         }
+
+        public async Task<bool> DeletePartialPaymentAsync(int paymentId)
+        {
+            var partialPayment = await _context.PartialPayments.FindAsync(paymentId);
+            if (partialPayment == null)
+                return false;
+
+            var fundingRequestId = partialPayment.FundingRequestId;
+
+            // Eliminar el pago parcial
+            _context.PartialPayments.Remove(partialPayment);
+            await _context.SaveChangesAsync();
+
+            // Recalcular y actualizar el total en FundingRequest
+            var newTotal = await GetTotalPartialPaymentAsync(fundingRequestId);
+            var fundingRequest = await _context.Requests.FindAsync(fundingRequestId);
+            if (fundingRequest != null)
+            {
+                fundingRequest.PartialPayment = (double)newTotal;
+                _context.Requests.Update(fundingRequest);
+                await _context.SaveChangesAsync();
+            }
+
+            return true;
+        }
     }
 }

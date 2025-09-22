@@ -17,6 +17,7 @@ namespace API_Pedidos.Services
             return await _context.UserDAs
                 .Where(u => u.UserId == userId && u.IsActive)
                 .Select(u => u.DANumber)
+                .OrderDescending()
                 .ToListAsync();
         }
     }

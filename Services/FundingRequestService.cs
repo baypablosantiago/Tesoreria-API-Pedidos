@@ -39,7 +39,7 @@ namespace API_Pedidos.Services
         {
             var entities = await _context.Requests
                 .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.ReceivedAt)
+                .OrderBy(r => r.RequestNumber)
                 .ToListAsync();
 
             return FundingRequestMapper.ToResponseDtoList(entities);
@@ -49,7 +49,7 @@ namespace API_Pedidos.Services
         {
             var entities = await _context.Requests
                 .Where(fr => fr.IsActive)
-                .OrderByDescending(fr => fr.ReceivedAt)
+                .OrderBy(fr => fr.RequestNumber)
                 .ToListAsync();
                 
             return FundingRequestMapper.ToAdminResponseDtoList(entities);
@@ -59,7 +59,7 @@ namespace API_Pedidos.Services
         {
             var entities = await _context.Requests
                 .Where(fr => !fr.IsActive)
-                .OrderByDescending(fr => fr.ReceivedAt)
+                .OrderBy(fr => fr.RequestNumber)
                 .ToListAsync();
                 
             return FundingRequestMapper.ToAdminResponseDtoList(entities);

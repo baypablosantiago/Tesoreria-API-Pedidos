@@ -24,14 +24,33 @@ namespace API_Pedidos.Services
         {
             var entity = FundingRequestMapper.ToEntity(newFundingRequest);
             entity.UserId = userId;
-            
+
+            // Verificar si ya existe una solicitud idéntica del mismo usuario
+            var existingRequest = await _context.Requests
+                .Where(fr => fr.UserId == userId &&
+                            fr.DA == entity.DA &&
+                            fr.RequestNumber == entity.RequestNumber &&
+                            fr.FiscalYear == entity.FiscalYear &&
+                            fr.PaymentOrderNumber == entity.PaymentOrderNumber &&
+                            fr.Concept == entity.Concept &&
+                            fr.DueDate == entity.DueDate &&
+                            fr.Amount == entity.Amount &&
+                            fr.FundingSource == entity.FundingSource &&
+                            fr.CheckingAccount == entity.CheckingAccount)
+                .FirstOrDefaultAsync();
+
+            if (existingRequest != null)
+            {
+                throw new InvalidOperationException("Ya existe una solicitud idéntica con los mismos datos.");
+            }
+
             _context.Add(entity);
             await _context.SaveChangesAsync();
-            
+
             // Auditar creación
             var user = await _userManager.FindByIdAsync(userId);
             await _auditService.LogCreateAsync(entity.Id, userId, user?.Email ?? "Unknown");
-            
+
             return FundingRequestMapper.ToResponseDto(entity);
         }
 

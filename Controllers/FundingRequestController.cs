@@ -120,11 +120,11 @@ namespace API_Pedidos.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            var success = await _fundingRequestService.UpdateFundingRequestAsync(dto, userId);
-            if (!success)
-                return NotFound(new { message = "La solicitud no fue encontrada o no tienes permisos para modificarla." });
+            var result = await _fundingRequestService.UpdateFundingRequestAsync(dto, userId);
+            if (result == null)
+                return NotFound();
 
-            return Ok(new { message = "Solicitud actualizada correctamente." });
+            return Ok(result);
         }
 
     }

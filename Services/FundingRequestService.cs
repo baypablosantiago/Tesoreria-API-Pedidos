@@ -25,7 +25,6 @@ namespace API_Pedidos.Services
             var entity = FundingRequestMapper.ToEntity(newFundingRequest);
             entity.UserId = userId;
 
-            // Verificar si ya existe una solicitud idéntica del mismo usuario
             var existingRequest = await _context.Requests
                 .Where(fr => fr.UserId == userId &&
                             fr.DA == entity.DA &&
@@ -173,14 +172,14 @@ namespace API_Pedidos.Services
             return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
         }
 
-        public async Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId)
+        public async Task<FundingRequestResponseDto?> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId)
         {
             var request = await _context.Requests.FindAsync(dto.Id);
             if (request == null)
-                return false;
+                return null;
 
             if (request.UserId != userId)
-                return false;
+                return null;
 
             var user = await _userManager.FindByIdAsync(userId);
             var userEmail = user?.Email ?? "Unknown";
@@ -188,28 +187,28 @@ namespace API_Pedidos.Services
             // Auditar cambios campo por campo
             if (request.RequestNumber != dto.RequestNumber)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "RequestNumber", request.RequestNumber.ToString(), dto.RequestNumber.ToString());
-            
+
             if (request.FiscalYear != dto.FiscalYear)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "FiscalYear", request.FiscalYear.ToString(), dto.FiscalYear.ToString());
-            
+
             if (request.PaymentOrderNumber != dto.PaymentOrderNumber)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "PaymentOrderNumber", request.PaymentOrderNumber, dto.PaymentOrderNumber);
-            
+
             if (request.Concept != dto.Concept)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "Concept", request.Concept, dto.Concept);
-            
+
             if (request.Amount != dto.Amount)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "Amount", request.Amount.ToString("C"), dto.Amount.ToString("C"));
-            
+
             if (request.FundingSource != dto.FundingSource)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "FundingSource", request.FundingSource, dto.FundingSource);
-            
+
             if (request.CheckingAccount != dto.CheckingAccount)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "CheckingAccount", request.CheckingAccount, dto.CheckingAccount);
-            
+
             if (request.DueDate != dto.DueDate)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "DueDate", request.DueDate, dto.DueDate);
-            
+
             if (request.Comments != dto.Comments)
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "Comments", request.Comments ?? "", dto.Comments ?? "");
 
@@ -227,7 +226,7 @@ namespace API_Pedidos.Services
             _context.Requests.Update(request);
             await _context.SaveChangesAsync();
 
-            return true;
+            return FundingRequestMapper.ToResponseDto(request);
         }
     }
 }

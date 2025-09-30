@@ -12,6 +12,6 @@ namespace API_Pedidos.Services
         Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id, string currentUserId);
         Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id, string currentUserId);
         Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment, string currentUserId);
-        Task<bool> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId);
+        Task<FundingRequestResponseDto?> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId);
     }
 }

@@ -86,6 +86,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -108,6 +110,7 @@ app.UseAuthorization();
 app.UseMiddleware<LoginAuditMiddleware>();
 
 app.MapIdentityApi<IdentityUser>();
+app.MapHub<API_Pedidos.Hubs.FundingRequestHub>("/hubs/funding-requests");
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())

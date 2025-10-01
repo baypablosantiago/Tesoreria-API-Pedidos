@@ -2,6 +2,8 @@ using API_Pedidos.DTOs;
 using API_Pedidos.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
+using API_Pedidos.Hubs;
 
 namespace API_Pedidos.Services
 {
@@ -11,13 +13,15 @@ namespace API_Pedidos.Services
         private readonly IFundingRequestAuditService _auditService;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IPartialPaymentService _partialPaymentService;
+        private readonly IHubContext<FundingRequestHub> _hubContext;
 
-        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager, IPartialPaymentService partialPaymentService)
+        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager, IPartialPaymentService partialPaymentService, IHubContext<FundingRequestHub> hubContext)
         {
             _context = context;
             _auditService = auditService;
             _userManager = userManager;
             _partialPaymentService = partialPaymentService;
+            _hubContext = hubContext;
         }
 
         public async Task<FundingRequestResponseDto> AddFundingRequestAsync(FundingRequestCreateDto newFundingRequest, string userId)
@@ -46,9 +50,11 @@ namespace API_Pedidos.Services
             _context.Add(entity);
             await _context.SaveChangesAsync();
 
-            // Auditar creación
             var user = await _userManager.FindByIdAsync(userId);
             await _auditService.LogCreateAsync(entity.Id, userId, user?.Email ?? "Unknown");
+
+            var result = FundingRequestMapper.ToAdminResponseDto(entity);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
             return FundingRequestMapper.ToResponseDto(entity);
         }
@@ -104,10 +110,12 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            // Auditar cambio de pago (mantener compatibilidad con sistema de auditoría)
             await _auditService.LogPaymentUpdateAsync(id, currentUserId, userEmail, oldPayment, (double)totalPartialPayment);
 
-            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
+
+            return result;
         }
 
         public async Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id, string currentUserId)
@@ -127,13 +135,15 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            // Auditar cambio de estado
             var currentUser = await _userManager.FindByIdAsync(currentUserId);
             var action = fundingRequest.IsActive ? "ACTIVATE" : "DEACTIVATE";
             var description = fundingRequest.IsActive ? "Solicitud activada" : "Solicitud desactivada";
             await _auditService.LogStatusChangeAsync(id, currentUserId, currentUser?.Email ?? "Unknown", action, description);
 
-            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
+
+            return result;
         }
 
         public async Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id, string currentUserId)
@@ -146,13 +156,15 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            // Auditar cambio de estado "en trabajo"
             var currentUser = await _userManager.FindByIdAsync(currentUserId);
             var action = "CHANGE_WORK_STATUS";
             var description = fundingRequest.OnWork ? "Solicitud marcada como 'en trabajo'" : "Solicitud desmarcada de 'en trabajo'";
             await _auditService.LogStatusChangeAsync(id, currentUserId, currentUser?.Email ?? "Unknown", action, description);
 
-            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
+
+            return result;
         }
 
         public async Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment, string currentUserId)
@@ -165,11 +177,13 @@ namespace API_Pedidos.Services
             _context.Requests.Update(fundingRequest);
             await _context.SaveChangesAsync();
 
-            // Auditar comentario
             var currentUser = await _userManager.FindByIdAsync(currentUserId);
             await _auditService.LogCommentAsync(id, currentUserId, currentUser?.Email ?? "Unknown", comment);
 
-            return FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
+
+            return result;
         }
 
         public async Task<FundingRequestResponseDto?> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId)
@@ -225,6 +239,9 @@ namespace API_Pedidos.Services
 
             _context.Requests.Update(request);
             await _context.SaveChangesAsync();
+
+            var result = FundingRequestMapper.ToAdminResponseDto(request);
+            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
             return FundingRequestMapper.ToResponseDto(request);
         }

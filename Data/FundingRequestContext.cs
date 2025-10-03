@@ -16,4 +16,5 @@ public class FundingRequestContext : IdentityDbContext<IdentityUser, IdentityRol
     public DbSet<FundingRequestAudit> FundingRequestAudits { get; set; } = null!;
     public DbSet<UserDA> UserDAs { get; set; } = null!;
     public DbSet<PartialPayment> PartialPayments { get; set; } = null!;
+    public DbSet<AdminNotification> AdminNotifications { get; set; } = null!;
 }

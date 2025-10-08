@@ -48,6 +48,7 @@ builder.Services.AddScoped<IFundingRequestAuditService, FundingRequestAuditServi
 builder.Services.AddScoped<IUserDAService, UserDAService>();
 builder.Services.AddScoped<IPartialPaymentService, PartialPaymentService>();
 builder.Services.AddScoped<IAdminNotificationService, AdminNotificationService>();
+builder.Services.AddScoped<IUserNotificationService, UserNotificationService>();
 
 // Headers para reverse proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

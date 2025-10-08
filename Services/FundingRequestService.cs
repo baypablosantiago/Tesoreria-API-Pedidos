@@ -15,8 +15,9 @@ namespace API_Pedidos.Services
         private readonly IPartialPaymentService _partialPaymentService;
         private readonly IHubContext<FundingRequestHub> _hubContext;
         private readonly IAdminNotificationService _notificationService;
+        private readonly IUserNotificationService _userNotificationService;
 
-        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager, IPartialPaymentService partialPaymentService, IHubContext<FundingRequestHub> hubContext, IAdminNotificationService notificationService)
+        public FundingRequestService(FundingRequestContext context, IFundingRequestAuditService auditService, UserManager<IdentityUser> userManager, IPartialPaymentService partialPaymentService, IHubContext<FundingRequestHub> hubContext, IAdminNotificationService notificationService, IUserNotificationService userNotificationService)
         {
             _context = context;
             _auditService = auditService;
@@ -24,6 +25,7 @@ namespace API_Pedidos.Services
             _partialPaymentService = partialPaymentService;
             _hubContext = hubContext;
             _notificationService = notificationService;
+            _userNotificationService = userNotificationService;
         }
 
         private async Task<bool> IsUserAdminAsync(string userId)
@@ -64,10 +66,8 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(entity);
 
-            // Enviar actualización del dashboard
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            // Crear notificación detallada
             var notification = new FundingRequestChangeNotificationDto
             {
                 RequestId = entity.Id,
@@ -79,10 +79,8 @@ namespace API_Pedidos.Services
                 FullRequest = result
             };
 
-            // Guardar notificación en DB para todos los admins
             await _notificationService.CreateNotificationForAllAdminsAsync(notification);
 
-            // Enviar por SignalR
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestNotification", notification);
 
             return FundingRequestMapper.ToResponseDto(entity);
@@ -127,12 +125,10 @@ namespace API_Pedidos.Services
             var currentUser = await _userManager.FindByIdAsync(currentUserId);
             var userEmail = currentUser?.Email ?? "Unknown";
 
-            // Crear nuevo registro en PartialPayments
             await _partialPaymentService.CreatePartialPaymentAsync(id, (decimal)newPartialPayment, currentUserId, userEmail);
 
             var oldPayment = fundingRequest.PartialPayment;
 
-            // Recalcular el total de pagos parciales
             var totalPartialPayment = await _partialPaymentService.GetTotalPartialPaymentAsync(id);
             fundingRequest.PartialPayment = (double)totalPartialPayment;
 
@@ -143,10 +139,7 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
 
-            // Siempre enviar actualización del dashboard
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
-
-            // NO enviar notificación (acción de admin)
 
             return result;
         }
@@ -175,10 +168,18 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
 
-            // Siempre enviar actualización del dashboard
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            // NO enviar notificación (acción de admin)
+            if (!fundingRequest.IsActive)
+            {
+                var message = $"Tu solicitud #{fundingRequest.RequestNumber} ha sido finalizada correctamente, podrá visualizarla en la pestaña \"Historial de Solicitudes\".";
+                await _userNotificationService.CreateNotificationForUserAsync(
+                    fundingRequest.UserId,
+                    fundingRequest.Id,
+                    "STATUS_FINALIZED",
+                    message
+                );
+            }
 
             return result;
         }
@@ -201,10 +202,24 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
 
-            // Siempre enviar actualización del dashboard
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            // NO enviar notificación (acción de admin)
+            string message;
+            if (fundingRequest.OnWork)
+            {
+                message = $"Su solicitud #{fundingRequest.RequestNumber} entró en revisión, ya no podrá modificarla, solo agregar/modificar el campo \"Comentarios\".";
+            }
+            else
+            {
+                message = $"Su solicitud #{fundingRequest.RequestNumber} está pendiente.";
+            }
+
+            await _userNotificationService.CreateNotificationForUserAsync(
+                fundingRequest.UserId,
+                fundingRequest.Id,
+                "WORK_STATUS_CHANGE",
+                message
+            );
 
             return result;
         }
@@ -225,10 +240,15 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
 
-            // Siempre enviar actualización del dashboard
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            // NO enviar notificación (acción de admin)
+            var message = $"Tesorería General agregó un comentario en la solicitud #{fundingRequest.RequestNumber}";
+            await _userNotificationService.CreateNotificationForUserAsync(
+                fundingRequest.UserId,
+                fundingRequest.Id,
+                "COMMENT_ADDED",
+                message
+            );
 
             return result;
         }
@@ -245,10 +265,8 @@ namespace API_Pedidos.Services
             var user = await _userManager.FindByIdAsync(userId);
             var userEmail = user?.Email ?? "Unknown";
 
-            // Recolectar cambios para notificación
             var changes = new List<(string field, string oldValue, string newValue)>();
 
-            // Auditar cambios campo por campo
             if (request.RequestNumber != dto.RequestNumber)
             {
                 await _auditService.LogUpdateAsync(dto.Id, userId, userEmail, "RequestNumber", request.RequestNumber.ToString(), dto.RequestNumber.ToString());
@@ -303,7 +321,6 @@ namespace API_Pedidos.Services
                 changes.Add(("Comentarios", request.Comments ?? "(vacío)", dto.Comments ?? "(vacío)"));
             }
 
-            // Aplicar cambios
             request.RequestNumber = dto.RequestNumber;
             request.FiscalYear = dto.FiscalYear;
             request.PaymentOrderNumber = dto.PaymentOrderNumber;
@@ -319,10 +336,8 @@ namespace API_Pedidos.Services
 
             var result = FundingRequestMapper.ToAdminResponseDto(request);
 
-            // Enviar actualización del dashboard (una sola vez)
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            // Enviar notificaciones detalladas para cada cambio
             foreach (var change in changes)
             {
                 var notification = new FundingRequestChangeNotificationDto
@@ -339,10 +354,8 @@ namespace API_Pedidos.Services
                     FullRequest = result
                 };
 
-                // Guardar en DB para todos los admins
                 await _notificationService.CreateNotificationForAllAdminsAsync(notification);
 
-                // Enviar por SignalR
                 await _hubContext.Clients.Group("admins").SendAsync("FundingRequestNotification", notification);
             }
 

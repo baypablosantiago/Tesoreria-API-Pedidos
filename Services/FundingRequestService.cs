@@ -211,7 +211,7 @@ namespace API_Pedidos.Services
             }
             else
             {
-                message = $"Su solicitud #{fundingRequest.RequestNumber} está pendiente.";
+                message = $"Su solicitud #{fundingRequest.RequestNumber} está pendiente. Puede modificar los campos de la solicitud y agregar comentarios.";
             }
 
             await _userNotificationService.CreateNotificationForUserAsync(

@@ -1,6 +1,9 @@
+using API_Pedidos.Hubs;
+using API_Pedidos.Models;
 using API_Pedidos.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace API_Pedidos.Controllers
 {
@@ -10,10 +13,17 @@ namespace API_Pedidos.Controllers
     public class PartialPaymentController : ControllerBase
     {
         private readonly IPartialPaymentService _partialPaymentService;
+        private readonly IHubContext<FundingRequestHub> _hubContext;
+        private readonly FundingRequestContext _context;
 
-        public PartialPaymentController(IPartialPaymentService partialPaymentService)
+        public PartialPaymentController(
+            IPartialPaymentService partialPaymentService,
+            IHubContext<FundingRequestHub> hubContext,
+            FundingRequestContext context)
         {
             _partialPaymentService = partialPaymentService;
+            _hubContext = hubContext;
+            _context = context;
         }
 
         [HttpGet("{fundingRequestId}/history")]
@@ -34,9 +44,17 @@ namespace API_Pedidos.Controllers
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeletePartialPayment(int paymentId)
         {
-            var result = await _partialPaymentService.DeletePartialPaymentAsync(paymentId);
-            if (!result)
+            var fundingRequestId = await _partialPaymentService.DeletePartialPaymentAsync(paymentId);
+            if (fundingRequestId == null)
                 return NotFound();
+
+            // Obtener el funding request actualizado y enviarlo por SignalR
+            var fundingRequest = await _context.Requests.FindAsync(fundingRequestId.Value);
+            if (fundingRequest != null)
+            {
+                var dto = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
+                await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", dto);
+            }
 
             return Ok();
         }

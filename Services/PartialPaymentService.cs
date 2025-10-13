@@ -61,11 +61,11 @@ namespace API_Pedidos.Services
             };
         }
 
-        public async Task<bool> DeletePartialPaymentAsync(int paymentId)
+        public async Task<long?> DeletePartialPaymentAsync(int paymentId)
         {
             var partialPayment = await _context.PartialPayments.FindAsync(paymentId);
             if (partialPayment == null)
-                return false;
+                return null;
 
             var fundingRequestId = partialPayment.FundingRequestId;
 
@@ -83,7 +83,7 @@ namespace API_Pedidos.Services
                 await _context.SaveChangesAsync();
             }
 
-            return true;
+            return fundingRequestId;
         }
     }
 }

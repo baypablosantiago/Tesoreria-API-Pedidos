@@ -224,6 +224,59 @@ namespace API_Pedidos.Services
             return result;
         }
 
+        public async Task<int> SetOnWorkBatchAsync(SetOnWorkBatchDto dto, string currentUserId)
+        {
+            if (dto.RequestIds == null || dto.RequestIds.Count == 0)
+                return 0;
+
+            var requests = await _context.Requests
+                .Where(r => dto.RequestIds.Contains(r.Id))
+                .ToListAsync();
+
+            if (requests.Count == 0)
+                return 0;
+
+            var currentUser = await _userManager.FindByIdAsync(currentUserId);
+            var userEmail = currentUser?.Email ?? "Unknown";
+
+            foreach (var request in requests)
+            {
+                request.OnWork = dto.OnWork;
+                _context.Requests.Update(request);
+
+                var action = "CHANGE_WORK_STATUS_BATCH";
+                var description = dto.OnWork
+                    ? "Solicitud marcada como 'en trabajo' (operación masiva)"
+                    : "Solicitud desmarcada de 'en trabajo' (operación masiva)";
+
+                await _auditService.LogStatusChangeAsync(request.Id, currentUserId, userEmail, action, description);
+
+                var result = FundingRequestMapper.ToAdminResponseDto(request);
+                await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
+
+                string message;
+                if (dto.OnWork)
+                {
+                    message = $"Su solicitud #{request.RequestNumber} entró en revisión, ya no podrá modificarla, solo agregar/modificar el campo \"Comentarios\".";
+                }
+                else
+                {
+                    message = $"Su solicitud #{request.RequestNumber} está pendiente. Puede modificar los campos de la solicitud y agregar comentarios.";
+                }
+
+                await _userNotificationService.CreateNotificationForUserAsync(
+                    request.UserId,
+                    request.Id,
+                    "WORK_STATUS_CHANGE",
+                    message
+                );
+            }
+
+            await _context.SaveChangesAsync();
+
+            return requests.Count;
+        }
+
         public async Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment, string currentUserId)
         {
             var fundingRequest = await _context.Requests.FindAsync(id);

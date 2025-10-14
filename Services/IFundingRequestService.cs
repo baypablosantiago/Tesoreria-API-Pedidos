@@ -11,6 +11,7 @@ namespace API_Pedidos.Services
         Task<FundingRequestAdminResponseDto?> UpdatePartialPaymentAsync(long id, double newPartialPayment, string currentUserId);
         Task<FundingRequestAdminResponseDto?> ChangeIsActiveAsync(long id, string currentUserId);
         Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id, string currentUserId);
+        Task<int> SetOnWorkBatchAsync(SetOnWorkBatchDto dto, string currentUserId);
         Task<FundingRequestAdminResponseDto?> AddCommentAsync(long id, string comment, string currentUserId);
         Task<FundingRequestResponseDto?> UpdateFundingRequestAsync(FundingRequestUpdateDto dto, string userId);
     }

@@ -99,6 +99,21 @@ namespace API_Pedidos.Controllers
             return Ok(result);
         }
 
+        [HttpPost("batch/set-onwork"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> SetOnWorkBatch([FromBody] SetOnWorkBatchDto dto)
+        {
+            if (dto == null || dto.RequestIds == null || dto.RequestIds.Count == 0)
+                return BadRequest("No se proporcionaron IDs de solicitudes");
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var updatedCount = await _fundingRequestService.SetOnWorkBatchAsync(dto, currentUserId);
+
+            return Ok(new { UpdatedCount = updatedCount, Message = $"{updatedCount} solicitudes actualizadas" });
+        }
+
         [HttpPatch("add-comment/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> AddComment(long id, [FromBody] CommentsFromTesoDto dto)
         {

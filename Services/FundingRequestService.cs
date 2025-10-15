@@ -172,12 +172,20 @@ namespace API_Pedidos.Services
 
             if (!fundingRequest.IsActive)
             {
-                var message = $"Tu solicitud #{fundingRequest.RequestNumber} ha sido finalizada correctamente, podrá visualizarla en la pestaña \"Historial de Solicitudes\".";
                 await _userNotificationService.CreateNotificationForUserAsync(
                     fundingRequest.UserId,
                     fundingRequest.Id,
                     "STATUS_FINALIZED",
-                    message
+                    fundingRequest.RequestNumber
+                );
+            }
+            else
+            {
+                await _userNotificationService.CreateNotificationForUserAsync(
+                    fundingRequest.UserId,
+                    fundingRequest.Id,
+                    "STATUS_REACTIVATED",
+                    fundingRequest.RequestNumber
                 );
             }
 
@@ -214,21 +222,12 @@ namespace API_Pedidos.Services
                 var result = FundingRequestMapper.ToAdminResponseDto(request);
                 await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-                string message;
-                if (dto.OnWork)
-                {
-                    message = $"Su solicitud #{request.RequestNumber} entró en revisión, ya no podrá modificarla, solo agregar/modificar el campo \"Comentarios\".";
-                }
-                else
-                {
-                    message = $"Su solicitud #{request.RequestNumber} está pendiente. Puede modificar los campos de la solicitud y agregar comentarios.";
-                }
-
                 await _userNotificationService.CreateNotificationForUserAsync(
                     request.UserId,
                     request.Id,
                     "WORK_STATUS_CHANGE",
-                    message
+                    request.RequestNumber,
+                    dto.OnWork
                 );
             }
 
@@ -255,12 +254,11 @@ namespace API_Pedidos.Services
 
             await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
 
-            var message = $"Tesorería General agregó un comentario en la solicitud #{fundingRequest.RequestNumber}";
             await _userNotificationService.CreateNotificationForUserAsync(
                 fundingRequest.UserId,
                 fundingRequest.Id,
                 "COMMENT_ADDED",
-                message
+                fundingRequest.RequestNumber
             );
 
             return result;

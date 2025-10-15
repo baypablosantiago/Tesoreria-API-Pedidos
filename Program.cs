@@ -66,8 +66,8 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>()
 
 builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
 {
-    options.BearerTokenExpiration = TimeSpan.FromHours(6);
-    options.RefreshTokenExpiration = TimeSpan.FromMinutes(6); 
+    options.BearerTokenExpiration = TimeSpan.FromHours(8);
+    options.RefreshTokenExpiration = TimeSpan.FromHours(8); 
 });
 
 // CORS

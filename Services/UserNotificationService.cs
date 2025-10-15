@@ -1,5 +1,6 @@
 using API_Pedidos.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace API_Pedidos.Services
 {
@@ -12,14 +13,25 @@ namespace API_Pedidos.Services
             _context = context;
         }
 
-        public async Task CreateNotificationForUserAsync(string userId, long requestId, string changeType, string message)
+        public async Task CreateNotificationForUserAsync(string userId, long requestId, string changeType, int requestNumber, bool? onWork = null)
         {
+            // Construir objeto con los datos necesarios
+            var data = new Dictionary<string, object?>
+            {
+                ["requestNumber"] = requestNumber
+            };
+
+            if (onWork.HasValue)
+            {
+                data["onWork"] = onWork.Value;
+            }
+
             var notification = new UserNotification
             {
                 UserId = userId,
                 RequestId = requestId,
                 ChangeType = changeType,
-                Message = message,
+                Data = JsonSerializer.Serialize(data),
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             };

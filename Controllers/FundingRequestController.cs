@@ -85,20 +85,6 @@ namespace API_Pedidos.Controllers
             return Ok(result);
         }
 
-        [HttpPatch("on-work/{id}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> ChangeInWork(long id)
-        {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (currentUserId == null)
-                return Unauthorized();
-
-            var result = await _fundingRequestService.ChangeOnWorkAsync(id, currentUserId);
-            if (result == null)
-                return NotFound();
-
-            return Ok(result);
-        }
-
         [HttpPost("batch/set-onwork"), Authorize(Roles = "admin")]
         public async Task<IActionResult> SetOnWorkBatch([FromBody] SetOnWorkBatchDto dto)
         {
@@ -112,6 +98,48 @@ namespace API_Pedidos.Controllers
             var updatedCount = await _fundingRequestService.SetOnWorkBatchAsync(dto, currentUserId);
 
             return Ok(new { UpdatedCount = updatedCount, Message = $"{updatedCount} solicitudes actualizadas" });
+        }
+
+        [HttpPost("batch/mark-as-on-work"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> MarkAsOnWork([FromBody] List<long> requestIds)
+        {
+            if (requestIds == null || requestIds.Count == 0)
+                return BadRequest("No se proporcionaron IDs de solicitudes");
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var dto = new SetOnWorkBatchDto
+            {
+                RequestIds = requestIds,
+                OnWork = true
+            };
+
+            var updatedCount = await _fundingRequestService.SetOnWorkBatchAsync(dto, currentUserId);
+
+            return Ok(new { UpdatedCount = updatedCount, Message = $"{updatedCount} solicitudes marcadas como 'En revisión'" });
+        }
+
+        [HttpPost("batch/mark-as-pending"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> MarkAsPending([FromBody] List<long> requestIds)
+        {
+            if (requestIds == null || requestIds.Count == 0)
+                return BadRequest("No se proporcionaron IDs de solicitudes");
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserId == null)
+                return Unauthorized();
+
+            var dto = new SetOnWorkBatchDto
+            {
+                RequestIds = requestIds,
+                OnWork = false
+            };
+
+            var updatedCount = await _fundingRequestService.SetOnWorkBatchAsync(dto, currentUserId);
+
+            return Ok(new { UpdatedCount = updatedCount, Message = $"{updatedCount} solicitudes marcadas como 'Pendiente'" });
         }
 
         [HttpPatch("add-comment/{id}"), Authorize(Roles = "admin")]

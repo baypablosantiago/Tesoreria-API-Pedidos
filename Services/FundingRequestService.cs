@@ -184,46 +184,6 @@ namespace API_Pedidos.Services
             return result;
         }
 
-        public async Task<FundingRequestAdminResponseDto?> ChangeOnWorkAsync(long id, string currentUserId)
-        {
-            var fundingRequest = await _context.Requests.FindAsync(id);
-            if (fundingRequest == null)
-                return null;
-
-            var wasOnWork = fundingRequest.OnWork;
-            fundingRequest.OnWork = !fundingRequest.OnWork;
-            _context.Requests.Update(fundingRequest);
-            await _context.SaveChangesAsync();
-
-            var currentUser = await _userManager.FindByIdAsync(currentUserId);
-            var action = "CHANGE_WORK_STATUS";
-            var description = fundingRequest.OnWork ? "Solicitud marcada como 'en trabajo'" : "Solicitud desmarcada de 'en trabajo'";
-            await _auditService.LogStatusChangeAsync(id, currentUserId, currentUser?.Email ?? "Unknown", action, description);
-
-            var result = FundingRequestMapper.ToAdminResponseDto(fundingRequest);
-
-            await _hubContext.Clients.Group("admins").SendAsync("FundingRequestChanged", result);
-
-            string message;
-            if (fundingRequest.OnWork)
-            {
-                message = $"Su solicitud #{fundingRequest.RequestNumber} entró en revisión, ya no podrá modificarla, solo agregar/modificar el campo \"Comentarios\".";
-            }
-            else
-            {
-                message = $"Su solicitud #{fundingRequest.RequestNumber} está pendiente. Puede modificar los campos de la solicitud y agregar comentarios.";
-            }
-
-            await _userNotificationService.CreateNotificationForUserAsync(
-                fundingRequest.UserId,
-                fundingRequest.Id,
-                "WORK_STATUS_CHANGE",
-                message
-            );
-
-            return result;
-        }
-
         public async Task<int> SetOnWorkBatchAsync(SetOnWorkBatchDto dto, string currentUserId)
         {
             if (dto.RequestIds == null || dto.RequestIds.Count == 0)
